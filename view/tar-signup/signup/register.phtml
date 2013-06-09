@@ -15,6 +15,15 @@ $this->headTitle('Register');
     </div>
     <div class="container-fluid">
         <div class="row-fluid">
+            <?php if(!empty($this->scc)): ?>
+                <div class="span10">
+                    <ul>
+                    <?php foreach ($this->scc as $v): ?>
+                        <li><?php echo $v; ?></li>
+                    <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
             <?php if(!empty($this->err)): ?>
                 <div class="span10">
                     <ul>

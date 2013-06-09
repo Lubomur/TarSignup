@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2013 Francisc Tar (https://github.com/xFran/TarSignup.git)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
- 
+
 namespace TarSignup\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
@@ -17,7 +17,6 @@ use TarSignup\Model\Signup;
 use TarSignup\Model\Signin;
 use Zend\Mail\Message;
 use Zend\Mail\Transport\Sendmail as SendmailTransport;
-use Zend\Session\Config\SessionConfig;
 
 class SignupController extends AbstractActionController
 {
@@ -26,7 +25,7 @@ class SignupController extends AbstractActionController
     protected $authDbTable;
     protected $sessionStorage;
     protected $bcrypt;
-    protected $sessionSaveHandler;
+    protected $sessionSaveManager;
     protected $sessionManager;
 
     public function profileAction()
@@ -39,8 +38,9 @@ class SignupController extends AbstractActionController
                 'user' => $this->getAuthService()->getIdentity(),
             ));
         } else {
+			//$this->flashMessenger()->clearMessagesFromContainer();
             $this->flashMessenger()->addErrorMessage('Session expired or not valid.');
-            return $this->redirect()->toRoute('home');
+            return $this->redirect()->toRoute('tar-signup');
         }
 
     }
@@ -52,7 +52,7 @@ class SignupController extends AbstractActionController
     		$this->getAuthService()->clearIdentity();
     		$this->flashMessenger()->addSuccessMessage("You've been logged out");
     	}
-    	return $this->redirect()->toRoute('home');
+    	return $this->redirect()->toRoute('tar-signup');
     }
 
     public function loginAction()
@@ -95,17 +95,18 @@ class SignupController extends AbstractActionController
                     $this->getSessionStorage()->write($resultRow['username']);
 
                     /*** START SESSION DB STORAGE ***/
-		    //@TODO
+		            //@TODO
+		           $this->getSessionSaveManager()->start();
                     /*** END SESSION DB STORAGE ***/
 
                     return $this->redirect()->toRoute('tar-signup', array(
-                    		'action' => 'profile',
-                    		'key'    => $this->getAuthService()->getIdentity(),
+                		'action' => 'profile',
+                		'key'    => $this->getAuthService()->getIdentity(),
                     ));
                 }
             } else {
                 $this->flashMessenger()->addErrorMessage('Form data error');
-                return $this->redirect()->toRoute('home');
+                return $this->redirect()->toRoute('tar-signup');
             }
         }
         return new ViewModel(array(
@@ -128,11 +129,11 @@ class SignupController extends AbstractActionController
                 ));
             } else {
                 $this->flashMessenger()->addErrorMessage('No match found or user already activated.');
-                return $this->redirect()->toRoute('home');
+                return $this->redirect()->toRoute('tar-signup');
             }
         } else {
             $this->flashMessenger()->addErrorMessage('Sorry! Activation failed. Please try again later.');
-            return $this->redirect()->toRoute('home');
+            return $this->redirect()->toRoute('tar-signup');
         }
     }
 
@@ -164,7 +165,8 @@ class SignupController extends AbstractActionController
         		    $addTo        = $arrData['email'];
         		    $addFrom      = 'register@bisoncargo.com';
         		    $setSubject   = 'Your Registration is Pending Approval';
-        		    $hyperlink    = '<a href="http://localhost/zend/xtest/public/signup/activate/' . $arrData['security'] . '">Click Here To Activate Your Account</a>';
+        		    $hyperlink    = '<a href="http://localhost/zend/xtest/public/signup/activate/' .
+        		                    $arrData['security'] . '">Click Here To Activate Your Account</a>';
         		    $setBody      =
                     'Greetings ' . ucfirst($arrData['name']) .
                     ',<br />
@@ -184,18 +186,18 @@ class SignupController extends AbstractActionController
                 		    ->setSubject($setSubject)
                 		    ->setBody($setBody);
         		    $transport = new SendmailTransport();
-        		    
-			    /*** For productin uncomment the following block of code ***/
-			    /*** In XAMPP throw error ***/
-			    
+
+			        /*** For productin uncomment the following block of code ***/
+			        /*** In XAMPP throw error ***/
+
         		    /*
         		    if ($transport->send($message)) {
             		    $this->getSignupTable()->saveUser($signup);
         		    }
         		    */
-        		    
+
         		    /*** For save registration form test uncomment the following line ***/
-        		    //$this->getSignupTable()->saveUser($signup);
+        		    $this->getSignupTable()->saveUser($signup);
 
         		    return $this->redirect()->toRoute('tar-signup', array(
                 		'action' => 'notice'
@@ -205,6 +207,7 @@ class SignupController extends AbstractActionController
         }
         return new ViewModel(array(
             'form' => $form,
+			'scc'  => $this->flashMessenger()->getCurrentSuccessMessages(),
             'err'  => $this->flashMessenger()->getCurrentErrorMessages(),
         ));
     }
@@ -218,13 +221,13 @@ class SignupController extends AbstractActionController
         return $this->sessionManager;
 	}
 
-    public function getSessionSaveHandler()
+    public function getSessionSaveManager()
     {
-        if (!$this->sessionSaveHandler) {
+        if (!$this->sessionSaveManager) {
         	$sm = $this->getServiceLocator();
-        	$this->sessionSaveHandler = $sm->get('SessionSaveHandler');
+        	$this->sessionSaveManager = $sm->get('SessionSaveManager');
         }
-        return $this->sessionSaveHandler;
+        return $this->sessionSaveManager;
 	}
 
     public function getSignupTable()
@@ -281,4 +284,12 @@ class SignupController extends AbstractActionController
             ));
         }
 	}
+	/*
+	public function __destruct()
+	{
+		if($this->flasMessenger()->hasCurrentMessages()) {
+			$this->flashMessenger()->clearMessagesFromContainer();
+		}
+	}
+	*/
 }

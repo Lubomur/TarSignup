@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2013 Francisc Tar (https://github.com/xFran/TarSignup.git)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
- 
+
 return array(
     'controllers' => array(
         'invokables' => array(

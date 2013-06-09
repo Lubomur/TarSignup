@@ -1,6 +1,6 @@
 TarSignup
 ==========
-Version 0.0.1 Created by Francisc Tar
+Version 0.0.2 Created by Francisc Tar
 
 INTRODUCTION
 =============
@@ -11,6 +11,7 @@ FEATURES
 - Form Validation (not jQuery)
 - Email Autentificacion
 - Database Table Authentication
+- Database session storage
 - Remember me checkbox
 
 REQUIREMENTS
@@ -19,7 +20,6 @@ REQUIREMENTS
 
 TODO
 =====
-- Database session storage
 - Unique user login
 - Forgot password
 - Multilanguage
@@ -39,34 +39,7 @@ INSTALATION
 Now you are good to go.
 
 - Optional<br />
-You can add in YourProject -> module -> Application -> view -> application -> index -> index.phtml<br />
-After the first \<div class="hero-unit"\> block<br />
-Display success messages
-<pre>
-<?php if(!empty($this->scc)): ?>
-    \<div class="span10"\>
-        \<ul\>
-        <?php foreach ($this->scc as $v): ?>
-            \<li\><?php echo $v; ?>\</li\>
-        <?php endforeach; ?>
-        \</ul\>
-    \</div\>
-<?php endif; ?>
-</pre>
-Display error messages
-<pre>
-<?php if(!empty($this->err)): ?>
-    \<div class="span10"\>
-        \<ul\>
-        <?php foreach ($this->err as $v): ?>
-            \<li\><?php echo $v; ?>\</li\>
-        <?php endforeach; ?>
-       \</ul\>
-    \</div\>
-<?php endif; ?>
-</pre>
-
-And just a little bit of CSS to look nice while we are testing/developing:<br />
+Just a little bit of CSS to look nice while we are testing/developing:<br />
 YourProject -> public -> css -> style.css<br />
 Add this lines:
 <pre>

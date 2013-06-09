@@ -22,6 +22,7 @@ use Zend\Session\SaveHandler\DbTableGateway;
 use Zend\Session\SaveHandler\DbTableGatewayOptions;
 use Zend\Session\SessionManager;
 use Zend\Authentication\Storage\Session;
+use Zend\Session\Container;
 
 class Module implements AutoloaderProviderInterface
 {
@@ -78,11 +79,20 @@ class Module implements AutoloaderProviderInterface
                 	));
                 	return $bcrypt;
                 },
-                'SessionSaveHandler' => function($sm) {
-                    $dbAdapter           = $sm->get('Zend\Db\Adapter\Adapter');
+                'SessionSaveManager' => function($sm) {
+                    $dbAdapter           = $sm->get('Zend\Db\Adapter\Adapter'); /*** $sm->get('Zend\Db\Adapter\Session')); ??? WTF??? ***/
                     $sessionTableGateway = new TableGateway('session', $dbAdapter);
-                    $sessionSaveHandler  = new DbTableGateway($sessionTableGateway, new DbTableGatewayOptions());
-                    return $sessionSaveHandler;
+                    $optionsTableGateway = new DbTableGatewayOptions();
+                    $optionsTableGateway -> setIdColumn('id')
+                                         ->setNameColumn('name')
+                                         ->setModifiedColumn('modified')
+                                         ->setLifetimeColumn('lifetime')
+                                         ->setDataColumn('data');
+                    $sessionSaveHandler  = new DbTableGateway($sessionTableGateway, $optionsTableGateway);
+                    $sessionManager = new SessionManager();
+					$sessionManager->setSaveHandler($sessionSaveHandler);
+					Container::setDefaultManager($sessionManager);
+                    return $sessionManager;
                 },
             ),
         );
@@ -98,5 +108,10 @@ class Module implements AutoloaderProviderInterface
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
+
+        $sm = $e->getApplication()->getServiceManager();
+        $sessionManager = $sm->get('SessionSaveManager');
+        Container::setDefaultManager($sessionManager);
+        $sessionManager->start();
     }
 }
