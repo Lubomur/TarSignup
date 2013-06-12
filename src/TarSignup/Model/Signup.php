@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2013 Francisc Tar (https://github.com/xFran/TarSignup.git)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
- 
+
 namespace TarSignup\Model;
 
 use Zend\InputFilter\Factory as InputFactory;
@@ -23,29 +23,25 @@ class Signup implements InputFilterAwareInterface
     public $salt;
     public $email;
     public $hash;
-    public $active;
 
     protected $inputFilter;
 
-    private $_bcrypt;
-
-    public function __construct()
-    {
-        $this->_bcrypt = new Bcrypt(array(
-            'salt' => 'randomvaluerandomvaluerandomvaluerandomvalue',
-            'cost' => 13,
-        ));
-    }
-
     public function exchangeArray($data)
     {
-    	$this->name         = (isset($data['name']))       ? ucfirst($data['name'])                    : NULL;
-    	$this->username     = (isset($data['username']))   ? $data['username']                         : NULL;
-    	$this->password     = (isset($data['password']))   ? $this->_bcrypt->create($data['password']) : NULL;
-    	$this->salt         = (isset($data['salt']))       ? $data['salt']                             : NULL;
-    	$this->email        = (isset($data['email']))      ? $data['email']                            : NULL;
-    	$this->hash         = (isset($data['security']))   ? $data['security']                         : NULL;
-    	$this->active       = (isset($data['active']))     ? $data['active']                           : NULL;
+        $bcrypt = new Bcrypt(array(
+            			'salt' => 'XMG_-2)*|vU@L)vWJceU96,Og[`)9BNW]F.`66fYrls\'uX^=1V',
+            			'cost' => 10,
+                	));
+        for ($i = 0; $i < 50; $i++) {
+        	$data['salt'] .= chr(rand(33, 126));
+        }
+        $data['password'] = md5($data['salt'] . $bcrypt->create($data['password']));
+    	$this->name     = (isset($data['name']))       ? ucfirst($data['name']) : NULL;
+    	$this->username = (isset($data['username']))   ? $data['username']      : NULL;
+    	$this->password = (isset($data['password']))   ? $data['password']      : NULL;
+    	$this->salt     = (isset($data['salt']))       ? $data['salt']          : NULL;
+    	$this->email    = (isset($data['email']))      ? $data['email']         : NULL;
+    	$this->hash     = (isset($data['security']))   ? $data['security']      : NULL;
     }
 
     public function setInputFilter(InputFilterInterface $inputFilter)

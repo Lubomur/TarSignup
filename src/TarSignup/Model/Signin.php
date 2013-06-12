@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2013 Francisc Tar (https://github.com/xFran/TarSignup.git)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
- 
+
 namespace TarSignup\Model;
 
 use Zend\InputFilter\Factory as InputFactory;
@@ -16,19 +16,19 @@ use Zend\InputFilter\InputFilterInterface;
 
 class Signin implements InputFilterAwareInterface
 {
-    public $username;
-    public $password;
     public $salt;
     public $active;
+    public $state;
+    public $banned;
 
     protected $inputFilter;
 
     public function exchangeArray($data)
     {
-    	$this->username     = (isset($data['username']))   ? $data['username']                         : NULL;
-    	$this->password     = (isset($data['password']))   ? $data['password']                         : NULL;
-    	$this->salt         = (isset($data['salt']))       ? $data['salt']                             : NULL;
-    	$this->active       = (isset($data['active']))     ? $data['active']                           : NULL;
+    	$this->salt   = (isset($data['salt']))   ? $data['salt']   : NULL;
+    	$this->active = (isset($data['active'])) ? $data['active'] : NULL;
+    	$this->state  = (isset($data['state']))  ? $data['state']  : NULL;
+    	$this->banned = (isset($data['banned'])) ? $data['banned'] : NULL;
     }
 
     public function setInputFilter(InputFilterInterface $inputFilter)

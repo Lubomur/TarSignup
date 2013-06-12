@@ -1,6 +1,6 @@
 TarSignup
 ==========
-Version 0.0.2 Created by Francisc Tar
+Version 0.0.9 Created by Francisc Tar
 
 INTRODUCTION
 =============
@@ -13,6 +13,7 @@ FEATURES
 - Database Table Authentication
 - Database session storage
 - Remember me checkbox
+- Unique user login
 
 REQUIREMENTS
 =============
@@ -20,7 +21,6 @@ REQUIREMENTS
 
 TODO
 =====
-- Unique user login
 - Forgot password
 - Multilanguage
 - ...

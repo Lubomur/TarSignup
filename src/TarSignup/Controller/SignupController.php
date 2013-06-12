@@ -21,6 +21,7 @@ use Zend\Mail\Transport\Sendmail as SendmailTransport;
 class SignupController extends AbstractActionController
 {
     protected $signupTable;
+    protected $signinTable;
     protected $authService;
     protected $authDbTable;
     protected $sessionStorage;
@@ -48,8 +49,10 @@ class SignupController extends AbstractActionController
     public function logoutAction()
     {
     	if ($this->getAuthService()->hasIdentity()) {
+    	    $this->getSigninTable()->setStateInactive($this->getAuthService()->getIdentity());
     		$this->getSessionManager()->forgetMe();
     		$this->getAuthService()->clearIdentity();
+    		session_destroy();
     		$this->flashMessenger()->addSuccessMessage("You've been logged out");
     	}
     	return $this->redirect()->toRoute('tar-signup');
@@ -71,38 +74,55 @@ class SignupController extends AbstractActionController
             if ($form->isValid()) {
                 $signin->exchangeArray($form->getData());
                 $arrData = $form->getData();
-                $this->getAuthDbTable()
-                        ->setTableName('users')
-                        ->setIdentityColumn('username')
-                        ->setCredentialColumn('password')
-                        ->setIdentity($arrData['username'])
-                        ->setCredential($this->getBcrypt()->create($arrData['password']))
-                ;
-                $this->getAuthService()
-                        ->setAdapter($this->getAuthDbTable())
-                        ->setStorage($this->getSessionStorage())
-                ;
-                $result = $this->getAuthService()->authenticate();
-                foreach($result->getMessages() as $message) {
-                	$this->flashMessenger()->addErrorMessage($message);
-                }
-                if ($result->isValid()) {
-                    if ($arrData['remember'] == 1 ) {
-                        $this->getSessionManager()->rememberMe(100000);
+                $username = $arrData['username'];
+                if ($this->getSigninTable()->getUserData($username) == FALSE) {
+                    $this->flashMessenger()->addErrorMessage('Invalid Username!');
+                    return $this->redirect()->toRoute('tar-signup');
+                } else {
+                    $userData = (array) $this->getSigninTable()->getUserData($username);
+                    $password = md5($userData['salt'] . $this->getBcrypt()->create($arrData['password']));
+                    if ($this->getSigninTable()->getUserData($username, $password) == FALSE) {
+                        $this->flashMessenger()->addErrorMessage('Invalid Password!');
+                        return $this->redirect()->toRoute('tar-signup');
                     }
-                    $resultRow = (array) $this->getAuthDbTable()->getResultRowObject(array('id', 'username'));
-
-                    $this->getSessionStorage()->write($resultRow['username']);
-
-                    /*** START SESSION DB STORAGE ***/
-		            //@TODO
-		           $this->getSessionSaveManager()->start();
-                    /*** END SESSION DB STORAGE ***/
-
-                    return $this->redirect()->toRoute('tar-signup', array(
-                		'action' => 'profile',
-                		'key'    => $this->getAuthService()->getIdentity(),
-                    ));
+                }
+                if ($userData['active'] == 0) {
+                    $this->flashMessenger()->addErrorMessage('In order to login you have to activate your account. Check your email.');
+                    return $this->redirect()->toRoute('tar-signup');
+                } elseif ($userData['banned'] == 1) {
+                    $this->flashMessenger()->addErrorMessage('This account is blocked by the administrator.');
+                    return $this->redirect()->toRoute('tar-signup');
+                } elseif ($userData['state'] == 1) {
+                    $this->flashMessenger()->addErrorMessage('Session with this credentials already active.');
+                    return $this->redirect()->toRoute('tar-signup');
+                } else {
+                    $this->getAuthDbTable()
+                            ->setTableName('users')
+                            ->setIdentityColumn('username')
+                            ->setCredentialColumn('password')
+                            ->setIdentity($username)
+                            ->setCredential($password)
+                    ;
+                    $this->getAuthService()
+                            ->setAdapter($this->getAuthDbTable())
+                            ->setStorage($this->getSessionStorage())
+                    ;
+                    $result = $this->getAuthService()->authenticate();
+                    foreach($result->getMessages() as $message) {
+                    	$this->flashMessenger()->addErrorMessage($message);
+                    }
+                    if ($result->isValid()) {
+                        $this->getSigninTable()->setStateActive($username);
+                    	if ($arrData['remember'] == 1 ) {
+                    		$this->getSessionManager()->rememberMe(100000);
+                    	}
+                    	$resultRow = (array) $this->getAuthDbTable()->getResultRowObject(array('id', 'username'));
+                    	$this->getSessionStorage()->write($resultRow['username']);
+                    	return $this->redirect()->toRoute('tar-signup', array(
+                            'action' => 'profile',
+                            'key'    => $this->getAuthService()->getIdentity(),
+                    	));
+                    }
                 }
             } else {
                 $this->flashMessenger()->addErrorMessage('Form data error');
@@ -113,6 +133,7 @@ class SignupController extends AbstractActionController
             'form' => $form,
             'scc'  => $this->flashMessenger()->getCurrentSuccessMessages(),
             'err'  => $this->flashMessenger()->getCurrentErrorMessages(),
+//             'a'    => $password,
         ));
     }
 
@@ -221,15 +242,6 @@ class SignupController extends AbstractActionController
         return $this->sessionManager;
 	}
 
-    public function getSessionSaveManager()
-    {
-        if (!$this->sessionSaveManager) {
-        	$sm = $this->getServiceLocator();
-        	$this->sessionSaveManager = $sm->get('SessionSaveManager');
-        }
-        return $this->sessionSaveManager;
-	}
-
     public function getSignupTable()
     {
         if (!$this->signupTable) {
@@ -237,6 +249,15 @@ class SignupController extends AbstractActionController
         	$this->signupTable = $sm->get('TarSignup\Model\SignupTable');
         }
         return $this->signupTable;
+	}
+
+	public function getSigninTable()
+	{
+		if (!$this->signinTable) {
+			$sm = $this->getServiceLocator();
+			$this->signinTable = $sm->get('TarSignup\Model\SigninTable');
+		}
+		return $this->signinTable;
 	}
 
 	public function getAuthService()
@@ -284,12 +305,4 @@ class SignupController extends AbstractActionController
             ));
         }
 	}
-	/*
-	public function __destruct()
-	{
-		if($this->flasMessenger()->hasCurrentMessages()) {
-			$this->flashMessenger()->clearMessagesFromContainer();
-		}
-	}
-	*/
 }

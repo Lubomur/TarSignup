@@ -6,14 +6,13 @@
  * @copyright Copyright (c) 2013 Francisc Tar (https://github.com/xFran/TarSignup.git)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
- 
+
 namespace TarSignup\Model;
 
 use Zend\Db\TableGateway\TableGateway;
 
 class SignupTable
 {
-
     protected $tableGateway;
 
 	public function __construct(TableGateway $tableGateway)
@@ -27,19 +26,20 @@ class SignupTable
             'name'     => $signup->name,
             'username' => $signup->username,
             'password' => $signup->password,
+            'salt'     => $signup->salt,
             'email'    => $signup->email,
             'hash'     => $signup->hash,
         );
         $this->tableGateway->insert($data);
 	}
-	
+
 	public function getUserKey($hash)
 	{
 	    $rowset = $this->tableGateway->select(array('hash' => $hash));
 	    $row = $rowset->current();
 	    return $row;
 	}
-	
+
 	public function activateUser($hash)
 	{
 	    $rowset = $this->tableGateway->select(array('hash' => $hash));
@@ -55,7 +55,7 @@ class SignupTable
 	        return FALSE;
 	    }
 	}
-	
+
 	public function checkUserExists($username)
 	{
 	   $rowset = $this->tableGateway->select(array('username' => $username));

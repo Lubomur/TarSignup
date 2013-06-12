@@ -12,7 +12,9 @@ namespace TarSignup;
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\Mvc\ModuleRouteListener;
 use TarSignup\Model\Signup;
+use TarSignup\Model\Signin;
 use TarSignup\Model\SignupTable;
+use TarSignup\Model\SigninTable;
 use Zend\Db\ResultSet\ResultSet;
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Authentication\AuthenticationService;
@@ -55,6 +57,17 @@ class Module implements AutoloaderProviderInterface
                     $resultSetPrototype->setArrayObjectPrototype(new Signup());
                     return new TableGateway('users', $dbAdapter, null, $resultSetPrototype);
                 },
+                'TarSignup\Model\SigninTable' => function($sm) {
+                	$tableGateway = $sm->get('SigninTableGateway');
+                	$row          = new SigninTable($tableGateway);
+                	return $row;
+                },
+                'SigninTableGateway' => function ($sm) {
+                	$dbAdapter          = $sm->get('Zend\Db\Adapter\Adapter');
+                	$resultSetPrototype = new ResultSet();
+                	$resultSetPrototype->setArrayObjectPrototype(new Signin());
+                	return new TableGateway('users', $dbAdapter, null, $resultSetPrototype);
+                },
                 'AuthDbTable' => function($sm) {
                 	$dbAdapter      = $sm->get('Zend\Db\Adapter\Adapter');
                 	$authDbTable    = new AuthDbTable($dbAdapter);
@@ -74,8 +87,8 @@ class Module implements AutoloaderProviderInterface
                 },
                 'Bcrypt' => function($sm) {
                 	$bcrypt = new Bcrypt(array(
-            			'salt' => 'randomvaluerandomvaluerandomvaluerandomvalue',
-            			'cost' => 13,
+            			'salt' => 'XMG_-2)*|vU@L)vWJceU96,Og[`)9BNW]F.`66fYrls\'uX^=1V',
+            			'cost' => 10,
                 	));
                 	return $bcrypt;
                 },
@@ -111,7 +124,6 @@ class Module implements AutoloaderProviderInterface
 
         $sm = $e->getApplication()->getServiceManager();
         $sessionManager = $sm->get('SessionSaveManager');
-        Container::setDefaultManager($sessionManager);
         $sessionManager->start();
     }
 }
