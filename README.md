@@ -64,7 +64,7 @@ ul {
 
 Testing
 ========
-Don't forget to import users.sql to your database!
+Don't forget to import users.sql and session.sql to your database!
 - Username: admin
 - Passord:  123456
 
